@@ -4,6 +4,9 @@ from __future__ import annotations
 import os
 import requests
 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 DEFAULT_API_URL = os.getenv("LITELLM_API_URL", "https://litellm.tokengate.ru/v1/chat/completions")
 DEFAULT_MODEL = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")

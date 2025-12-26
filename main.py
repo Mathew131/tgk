@@ -11,6 +11,8 @@ from aiogram import Bot
 from parse import parse_once_and_save, OUTPUT_FILE
 from api import llm_generate_from_text
 
+from dotenv import load_dotenv
+load_dotenv()
 
 GENERATED_FILE = Path("generated_post.txt")
 
