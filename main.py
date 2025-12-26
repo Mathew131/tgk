@@ -64,13 +64,12 @@ def run_once_all() -> None:
             latest_path = DATA_DIR / f"latest_{flow}.txt"
             raw = latest_path.read_text(encoding="utf-8")
 
-            generated = generated = llm_generate(raw, article.url)
+            generated = generated = llm_generate(raw)
 
             out_path = DATA_DIR / f"generated_{flow}.txt"
             out_path.write_text(generated, encoding="utf-8")
 
-            # Ссылка в начале поста (как ты просил)
-            final_text = f"{article.url}\n\n{generated}"
+            final_text = f"{generated}\n\n{article.url}"
 
             asyncio.run(send_to_telegram(ch_id, final_text))
             print(f"[{flow}] отправила в канал")

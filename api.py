@@ -11,7 +11,7 @@ DEFAULT_API_URL = os.getenv(
 DEFAULT_MODEL = os.getenv("LLM_MODEL", "openai/gpt-oss-20b")
 
 
-def llm_generate(text: str, article_url: str) -> str:
+def llm_generate(text: str) -> str:
     api_key = os.getenv("LITELLM_API_KEY")
     if not api_key:
         raise RuntimeError("Не задан LITELLM_API_KEY (переменная окружения)")
@@ -22,16 +22,16 @@ def llm_generate(text: str, article_url: str) -> str:
     }
 
     system_prompt = """
-Ты русский редактор. Пиши как можно лаконичней, только основную суть.
+    Ты русский редактор. Пиши как можно лаконичней, только основную суть.
 
-ФОРМАТ ВЫВОДА (строго):
-- Первая строка: заголовок статьи (БЕЗ двоеточия, обрамлена *)
-- Далее пустая строка
-- Далее 2–4 абзаца текста. Каждый не более 40 слов.
+    ФОРМАТ ВЫВОДА (строго):
+    - Первая строка: заголовок статьи (БЕЗ двоеточия, обрамлена *)
+    - Далее пустая строка
+    - Далее 2–4 абзаца текста. Каждый не более 40 слов.
 
-НЕ ДОБАВЛЯЙ вводных слов:
-"Пост-выжимка", "Кратко", "Резюме", "Вывод".
-"""
+    НЕ ДОБАВЛЯЙ вводных слов:
+    "Пост-выжимка", "Кратко", "Резюме", "Вывод".
+    """
 
     data = {
         "model": DEFAULT_MODEL,
@@ -46,4 +46,4 @@ def llm_generate(text: str, article_url: str) -> str:
 
     generated = r.json()["choices"][0]["message"]["content"].strip()
 
-    return f"{generated}\n\n{article_url}"
+    return f"{generated}"
