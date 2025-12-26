@@ -64,7 +64,7 @@ def run_once_all() -> None:
             latest_path = DATA_DIR / f"latest_{flow}.txt"
             raw = latest_path.read_text(encoding="utf-8")
 
-            generated = llm_generate(raw)
+            generated = generated = llm_generate(raw, article.url)
 
             out_path = DATA_DIR / f"generated_{flow}.txt"
             out_path.write_text(generated, encoding="utf-8")
