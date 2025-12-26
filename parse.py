@@ -9,11 +9,8 @@ from typing import Optional
 import requests
 from bs4 import BeautifulSoup
 
-
-FLOW_URL = "https://habr.com/ru/flows/ai_and_ml/articles/rated10/"
-STATE_FILE = Path("state.json")
-OUTPUT_FILE = Path("latest_post.txt")
-DEBUG_HTML = Path("debug_last_article.html")
+DATA_DIR = Path("data")
+DATA_DIR.mkdir(exist_ok=True)
 
 SESSION = requests.Session()
 SESSION.headers.update({
@@ -28,24 +25,37 @@ SESSION.headers.update({
 
 @dataclass(frozen=True)
 class Article:
+    flow: str
     id: str
     title: str
     url: str
     text: str
 
 
-def _load_state(state_file: Path = STATE_FILE) -> dict:
-    if not state_file.exists():
+def _state_file(flow: str) -> Path:
+    return DATA_DIR / f"state_{flow}.json"
+
+
+def _latest_file(flow: str) -> Path:
+    return DATA_DIR / f"latest_{flow}.txt"
+
+
+def _debug_file(flow: str) -> Path:
+    return DATA_DIR / f"debug_{flow}.html"
+
+
+def _load_state(path: Path) -> dict:
+    if not path.exists():
         return {}
     try:
-        txt = state_file.read_text(encoding="utf-8").strip()
+        txt = path.read_text(encoding="utf-8").strip()
         return json.loads(txt) if txt else {}
     except json.JSONDecodeError:
         return {}
 
 
-def _save_state(state: dict, state_file: Path = STATE_FILE) -> None:
-    state_file.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+def _save_state(path: Path, state: dict) -> None:
+    path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
 
 
 def _fetch_html(url: str, timeout: int = 20) -> str:
@@ -56,11 +66,11 @@ def _fetch_html(url: str, timeout: int = 20) -> str:
 
 def _looks_like_block_page(soup: BeautifulSoup) -> bool:
     text = soup.get_text(" ", strip=True).lower()
-    bad_markers = ["доступ ограничен", "captcha", "капча", "подтвердите", "robot", "cloudflare"]
-    return any(m in text for m in bad_markers)
+    bad = ["доступ ограничен", "captcha", "капча", "подтвердите", "robot", "cloudflare"]
+    return any(x in text for x in bad)
 
 
-def _get_latest_article_meta_from_flow(flow_url: str = FLOW_URL) -> dict:
+def _get_latest_article_meta_from_flow(flow_url: str) -> dict:
     html = _fetch_html(flow_url)
     soup = BeautifulSoup(html, "html.parser")
 
@@ -85,7 +95,7 @@ def _pick_article_container(soup: BeautifulSoup):
         "div.tm-article-body",
         "div.tm-article-presenter__content",
         "div.article-formatted-body",
-        "article",  # fallback
+        "article",
     ]
     for sel in selectors:
         node = soup.select_one(sel)
@@ -94,7 +104,7 @@ def _pick_article_container(soup: BeautifulSoup):
     return None
 
 
-def _extract_text_from_container(container) -> str:
+def _extract_text(container) -> str:
     blocks: list[str] = []
     for tag in container.find_all(["h1", "h2", "h3", "p", "li", "pre", "blockquote", "figcaption"]):
         txt = tag.get_text("\n", strip=True)
@@ -103,51 +113,49 @@ def _extract_text_from_container(container) -> str:
     return "\n\n".join(blocks).strip()
 
 
-def _fetch_article_text(article_url: str) -> str:
+def _fetch_article_text(article_url: str, debug_path: Path) -> str:
     html = _fetch_html(article_url)
     soup = BeautifulSoup(html, "html.parser")
 
     if _looks_like_block_page(soup):
-        DEBUG_HTML.write_text(html, encoding="utf-8")
-        raise RuntimeError("Habr отдал страницу-ограничение (капча/блок). Сохранила debug_last_article.html")
+        debug_path.write_text(html, encoding="utf-8")
+        raise RuntimeError(f"Habr отдал ограничение (капча/блок). Сохранила: {debug_path}")
 
     container = _pick_article_container(soup)
     if container is None:
-        DEBUG_HTML.write_text(html, encoding="utf-8")
-        raise RuntimeError("Не нашла контейнер статьи. Сохранила debug_last_article.html")
+        debug_path.write_text(html, encoding="utf-8")
+        raise RuntimeError(f"Не нашла контейнер статьи. Сохранила: {debug_path}")
 
-    text = _extract_text_from_container(container)
+    text = _extract_text(container)
     if not text:
-        DEBUG_HTML.write_text(html, encoding="utf-8")
-        raise RuntimeError("Контейнер найден, но текст пустой. Сохранила debug_last_article.html")
+        debug_path.write_text(html, encoding="utf-8")
+        raise RuntimeError(f"Контейнер найден, но текст пустой. Сохранила: {debug_path}")
 
     return text
 
 
-def parse_once_and_save(
-    flow_url: str = FLOW_URL,
-    state_file: Path = STATE_FILE,
-    output_file: Path = OUTPUT_FILE,
-) -> Optional[Article]:
+def parse_once_for_flow(flow: str, flow_url: str) -> Optional[Article]:
     """
-    1) берёт самый свежий пост из ленты
-    2) если он новый — качает полный текст
-    3) перезаписывает output_file
-    Возвращает Article, если пост новый, иначе None.
+    Проверяет flow_url, если новый пост — сохраняет latest_<flow>.txt и возвращает Article.
+    Если пост не новый — возвращает None.
     """
-    state = _load_state(state_file)
+    st_path = _state_file(flow)
+    latest_path = _latest_file(flow)
+    dbg_path = _debug_file(flow)
+
+    state = _load_state(st_path)
     last_id = state.get("last_id")
 
     meta = _get_latest_article_meta_from_flow(flow_url)
     if meta["id"] == last_id:
         return None
 
-    text = _fetch_article_text(meta["url"])
-    article = Article(id=meta["id"], title=meta["title"], url=meta["url"], text=text)
+    text = _fetch_article_text(meta["url"], dbg_path)
+    article = Article(flow=flow, id=meta["id"], title=meta["title"], url=meta["url"], text=text)
 
-    output_file.write_text(f"{article.title}\n{article.url}\n\n{article.text}", encoding="utf-8")
+    latest_path.write_text(f"{article.title}\n{article.url}\n\n{article.text}", encoding="utf-8")
 
     state["last_id"] = meta["id"]
-    _save_state(state, state_file)
+    _save_state(st_path, state)
 
     return article
