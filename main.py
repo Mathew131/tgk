@@ -22,10 +22,10 @@ FLOWS = [
     ("gamedev", "https://habr.com/ru/flows/gamedev/articles/", "CHANNEL_GAMEDEV"),
     ("ai_ml", "https://habr.com/ru/flows/ai_and_ml/articles/", "CHANNEL_AI_ML"),
     ("design", "https://habr.com/ru/flows/design/articles/", "CHANNEL_DESIGN"),
-    # ("management", "https://habr.com/ru/flows/management/articles/", "CHANNEL_MANAGEMENT"),
-    # ("marketing", "https://habr.com/ru/flows/marketing/articles/", "CHANNEL_MARKETING"),
-    # ("popsci", "https://habr.com/ru/flows/popsci/articles/", "CHANNEL_POPSCI"),
-    # ("all", "https://habr.com/ru/articles/", "CHANNEL_ALL"),
+    ("management", "https://habr.com/ru/flows/management/articles/", "CHANNEL_MANAGEMENT"),
+    ("marketing", "https://habr.com/ru/flows/marketing/articles/", "CHANNEL_MARKETING"),
+    ("popsci", "https://habr.com/ru/flows/popsci/articles/", "CHANNEL_POPSCI"),
+    ("all", "https://habr.com/ru/articles/", "CHANNEL_ALL"),
 ]
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
