@@ -41,10 +41,8 @@ def channel_id_from_env(env_name: str) -> int | None:
 
 
 async def send_to_telegram(channel_id: int, text: str) -> None:
-    bot = Bot(token=BOT_TOKEN)
-    # Markdown как ты хотел: ссылка первой строкой + текст
-    await bot.send_message(chat_id=channel_id, text=text, parse_mode="Markdown")
-    await bot.session.close()
+    async with Bot(token=BOT_TOKEN) as bot:
+        await bot.send_message(chat_id=channel_id, text=text, parse_mode="Markdown")
 
 
 def run_once_all() -> None:
