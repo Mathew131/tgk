@@ -49,6 +49,8 @@ async def send_to_telegram(channel_id: int, text: str) -> None:
 
 def run_once_all() -> None:
     for flow, url, channel_env in FLOWS:
+        time.sleep(random.randint(30, 120))  # небольшая пауза, чтобы не долбить Telegram/Habr
+
         ch_id = channel_id_from_env(channel_env)
         if ch_id is None:
             print(f"[{flow}] пропуск: не задан {channel_env}")
@@ -76,8 +78,6 @@ def run_once_all() -> None:
 
         except Exception as e:
             print(f"[{flow}] ошибка: {e}")
-        
-        time.sleep(random.randint(30, 120))  # небольшая пауза, чтобы не долбить Telegram/Habr
 
 
 def run_forever(period_seconds: int = 3600, jitter_seconds: int = 900) -> None:
