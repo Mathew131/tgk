@@ -14,6 +14,7 @@ from aiogram import Bot
 from parse import parse_once_for_flow, DATA_DIR
 from api import llm_generate
 
+import random
 
 FLOWS = [
     ("backend", "https://habr.com/ru/flows/backend/articles/", "CHANNEL_BACKEND"),
@@ -78,11 +79,15 @@ def run_once_all() -> None:
             print(f"[{flow}] ошибка: {e}")
 
 
-def run_forever(period_seconds: int = 3600) -> None:
+def run_forever(period_seconds: int = 3600, jitter_seconds: int = 900) -> None:
     while True:
         run_once_all()
-        time.sleep(period_seconds)
+
+        delay = period_seconds + random.randint(-jitter_seconds, jitter_seconds)
+        print(f"[scheduler] sleep {delay // 60} мин", flush=True)
+
+        time.sleep(delay)
 
 
 if __name__ == "__main__":
-    run_forever(3600)
+    run_forever(3600, 900)  # 1 час ± 15 минут
