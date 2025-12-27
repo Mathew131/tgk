@@ -18,6 +18,7 @@ import random
 
 FLOWS = [
     ("backend", "https://habr.com/ru/flows/backend/articles/", "CHANNEL_BACKEND"),
+    ("frontend", "https://habr.com/ru/flows/frontend/articles/", "CHANNEL_FRONTEND"),
     ("admin", "https://habr.com/ru/flows/admin/articles/", "CHANNEL_ADMIN"),
     ("infosec", "https://habr.com/ru/flows/information_security/articles/", "CHANNEL_INFOSEC"),
     ("gamedev", "https://habr.com/ru/flows/gamedev/articles/", "CHANNEL_GAMEDEV"),
