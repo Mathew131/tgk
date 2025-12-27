@@ -74,7 +74,7 @@ def run_once_all() -> None:
             asyncio.run(send_to_telegram(ch_id, final_text))
             print(f"[{flow}] отправила в канал")
 
-            time.sleep(2)  # маленькая пауза, чтобы не долбить Telegram/Habr
+            time.sleep(random.randint(60, 180))  # маленькая пауза, чтобы не долбить Telegram/Habr
 
         except Exception as e:
             print(f"[{flow}] ошибка: {e}")
